@@ -1,0 +1,18 @@
+---
+title: "Sprinboard Capstone Project Proposal"
+author: "Michael Buck"
+date: "November 29, 2018"
+output: html_document
+---
+
+Part 1: Problem Statement and Purpose.
+
+  Education is extremely important. Obtaining an accessible education that enables a person to lead a fulfulling life where they are able to achieve both their personal and professional goals is in my opinion the ideal "American dream". These thoughts have lead me to thinking about an interesting epidemic that I have observed in my time as a high school science teacher in North Carolina. I have seen many students who are ill-prepared for university go there and struggle to succeed in the fields they are interested in. I personally have had several bright students graduate from school and go to university and have to drop out of university entirely within a year or two, and have to start again at community college. I firmly belive that this is not entirely my students' fault, and that if more effort was made to inform them of the choices they could make, and what each school has to offer, they could make more sound educational decisions, at least financially. My plan is to create a program that analyzes the myriad of available education data to try to optimize the success rates of continuing education of students graduating from high school in the United States. 
+  
+Part 2: The Data and Problem Solving Process
+
+  The data that I am using in order to try to create my product comes from the US government created website called the college scorecard. This data is readily available from the US government's data website. The College Scorecard contains an enormous amount of data that would require a very long time to describe entirely, but here are some of the pertinent variables that the data set contains: 25th and 75 percentiles of scores of students admitted for both SAT and ACT, average SAT equivalent scores, percentages of degrees awarded by major, average net tuitions with various subgroups, completion rates based on educational backgrounds and race/ethnicity, retention rates, and loan debt accumulation of students. Virtually everything that I think I could possibly need for this project is contained within this data set. Using the available data I think one might be able to see certain trends in graduation success rate versus cost, specifically in regards to a students current academic performance and circumstances. I will use my knowledge of programming and statistics in order to try to create a system that can predict sucess rates of students based on their current capabilities in certain fields of study or schools. This would ultimately have the goal of predicting where a student might be most succesful after high school.
+  
+Part 3: Deliverables
+
+  My deliverables for this project will be a paper and a slide deck showing the analysis of my results, with proper data visualizations, and actiona that students can take generally based on their current academic skills.
