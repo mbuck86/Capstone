@@ -103,17 +103,64 @@ BigBach <- BigBach %>% select(-"POOLYRS", -"MENONLY", -"WOMENONLY", -"RELAFFIL")
 BigBach <- BigBach %>% select(-"DEBT_N", -"GRAD_DEBT_N", -"CUML_DEBT_N",-"CUML_DEBT_P90",-"CUML_DEBT_P75",-"CUML_DEBT_P25",-"CUML_DEBT_P10",
                               -"INC_N", -"PAR_ED_N", -"APPL_SCH_N")
 
-#getting rid of numbers of students
-BigBach <- BigBach %>% select(-starts_with("COUNT_WNE_"))
+#getting rid of numbers of students and fafsa data
+BigBach <- BigBach %>% select(-starts_with("COUNT_WNE_"), -starts_with("FSEND_"))
 
 #turning various values into numerics for calculations.
 BigBach$SAT_AVG <- as.numeric(BigBach$SAT_AVG)
 BigBach$C150_4 <- as.numeric(BigBach$C150_4)
 BigBach$C100_4 <- as.numeric(BigBach$C100_4)
+BigBach$SATVR25 <- as.numeric(BigBach$SATVR25)
+BigBach$SATVR75 <- as.numeric(BigBach$SATVR75)
+BigBach$SATMT25 <- as.numeric(BigBach$SATMT25)
+BigBach$SATMT75 <- as.numeric(BigBach$SATMT75)
+BigBach$SATWR25 <- as.numeric(BigBach$SATWR25)
+BigBach$SATWR75 <- as.numeric(BigBach$SATWR75)
 BigBach$SATVRMID <- as.numeric(BigBach$SATVRMID)
 BigBach$SATMTMID <- as.numeric(BigBach$SATMTMID)
 BigBach$ACTCMMID <- as.numeric(BigBach$ACTCMMID)
 BigBach$ACTENMID <- as.numeric(BigBach$ACTENMID)
 BigBach$ACTMTMID <- as.numeric(BigBach$ACTMTMID)
+BigBach$ADM_RATE <- as.numeric(BigBach$ADM_RATE)
+BigBach$ADM_RATE_ALL <- as.numeric(BigBach$ADM_RATE_ALL)
+BigBach$AVGFACSAL <- as.numeric(BigBach$AVGFACSAL)
+BigBach$MD_EARN_WNE_P10 <- as.numeric(BigBach$MD_EARN_WNE_P10)
+
+
+BigBach <- arrange(BigBach, INSTNM)
+
+MdnData <- BigBach %>% 
+  group_by(INSTNM) %>% 
+  summarise(SATAVG = median(SAT_AVG, na.rm = TRUE), SxGRt = median(C150_4, na.rm = TRUE), SATVR25 = median(SATVR25, na.rm = TRUE),
+            SATVR75 = median(SATVR75, na.rm = TRUE), SATMT25 = median(SATMT25, na.rm = TRUE), SATMT75 = median(SATMT75, na.rm = TRUE),
+            SATVRMID=median(SATVRMID, na.rm=TRUE), SATMTMID=median(SATMTMID, na.rm=TRUE), ACTCMMID=median(ACTCMMID, na.rm=TRUE),
+            ACTENMID=median(ACTENMID, na.rm=TRUE), ACTMTMID=median(ACTMTMID, na.rm=TRUE), ADM_RATE=median(ADM_RATE, na.rm=TRUE), ADM_RATE_ALL=median(ADM_RATE_ALL, na.rm=TRUE),
+            AVGFACSAL=median(AVGFACSAL, na.rm=TRUE), MD_EARN_WNE_P10=median(MD_EARN_WNE_P10, na.rm=TRUE))
+
+FMdn <- na.omit(MdnData)
+hist(FMdn$MD_EARN_WNE_P10)
+
+plot(FMdn$AVGFACSAL, FMdn$MD_EARN_WNE_P10)
+plot(FMdn$ADM_RATE, FMdn$MD_EARN_WNE_P10)
+plot(FMdn$ADM_RATE_ALL, FMdn$MD_EARN_WNE_P10)
+
+
+plot(FMdn$ACTENMID, FMdn$MD_EARN_WNE_P10)
+ggplot(FMdn, aes(ACTENMID, MD_EARN_WNE_P10)) + geom_jitter()
+
+plot(FMdn$SxGRt, FMdn$MD_EARN_WNE_P10)
+plot(FMdn$SATAVG, FMdn$MD_EARN_WNE_P10)
+
+
+
+Earn <- lm(MD_EARN_WNE_P10~SATAVG+SxGRt+SATVR25+SATVR75+SATMT25+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = MdnData)
+Earn.1 <- lm(MD_EARN_WNE_P10~SATAVG+SxGRt+SATVR25+SATVR75+SATMT25+SATMT75+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = MdnData)
+Earn.2 <- lm(MD_EARN_WNE_P10~SATAVG+SxGRt+SATVR25+SATVR75+SATMT25+SATMT75+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = MdnData)
+Earn.3 <- lm(MD_EARN_WNE_P10~SATAVG+SxGRt+SATVR75+SATMT25+SATMT75+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = MdnData)
+Earn.4 <- lm(MD_EARN_WNE_P10~SATAVG+SxGRt+SATVR75+SATMT25+SATMT75+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = MdnData)
+Earn.5 <- lm(MD_EARN_WNE_P10~SATAVG+SxGRt+SATVR75+SATMT25+SATMT75+ACTCMMID+ACTENMID+ACTMTMID+AVGFACSAL, data = MdnData)
+
+plot(Earn.5)
+FMdn[1101,]
 
 
