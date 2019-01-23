@@ -82,6 +82,17 @@ Uni$AVGFACSAL <- as.numeric(Uni$AVGFACSAL)
 Uni$MD_EARN_WNE_P10 <- as.numeric(Uni$MD_EARN_WNE_P10)
 Uni$MD_EARN_WNE_P6 <- as.numeric(Uni$MD_EARN_WNE_P6)
 
+#remove NA values
+Uni <- Uni %>% select("SAT_AVG", "C150_4", "C100_4", "SATVR25", "SATVR75", "SATMT25", "SATMT75",
+                      "SATWR25", "SATWR75","SATVRMID", "SATMTMID", "ACTCMMID", "ACTENMID", "ACTMTMID",
+                      "ADM_RATE", "ADM_RATE_ALL", "AVGFACSAL", "MD_EARN_WNE_P10", "MD_EARN_WNE_P6")
+
+Uni <- na.omit(Uni)
+
+
+
+
+
 hist(Uni$SAT_AVG)
 hist(Uni$C150_4, xlab="Percent Six Year Graduation Rate", main="Six year graduation rates, 2014-2015")
 hist(Uni$C100_4, xlab="Percent Four Year Graduation Rate", main="Four year graduation rates, 2014-2015")
@@ -94,9 +105,25 @@ ggplot(data=Uni, aes(x=SAT_AVG, y=MD_EARN_WNE_P10)) + geom_jitter()
 ggplot(data=Uni, aes(x=SAT_AVG, y=log(MD_EARN_WNE_P10))) + geom_jitter()
 ggplot(data=Uni, aes(x=ACTCMMID, y=MD_EARN_WNE_P10)) + geom_jitter()
 
-Earn <- lm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT25+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni)
+Earn <- lm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT25+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni, na.action = na.exclude)
 Earn.1 <- lm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni)
 Earn.2 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni)
 Earn.3 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni)
 Earn.4 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATMT75+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni)
 Earn.5 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+ADM_RATE_ALL+AVGFACSAL, data = Uni)
+
+library(QuantPsyc)
+lm.beta(Earn)
+
+library(ISLR)
+library(boot)
+set.seed(1)
+
+Earn.LOOCV <- cv.glm(Uni, Earn)
+Earn.1.LOOCV <- cv.glm(Uni, Earn.1)
+Earn.2.LOOCV <- cv.glm(Uni, Earn.2)
+Earn.3.LOOCV <- cv.glm(Uni, Earn.3)
+Earn.4.LOOCV <- cv.glm(Uni, Earn.4)
+Earn.5.LOOCV <- cv.glm(Uni, Earn.5)
+
+
