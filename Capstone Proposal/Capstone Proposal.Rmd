@@ -1,0 +1,46 @@
+Capstone Project Proposal for Springboard
+Author: Michael Buck
+
+Part 1: Problem Statement and Purpose
+
+Does doing well in high school, especially doing well on standardized tests,
+help you succeed later in life? This is a question that never leaves my mind, as
+someone who educates high school students for a living. Do the selection
+criteria of universities lead them to having more successful students? Are there
+common traits among universities that have high graduation rates or financially
+succesful students? I am interested in finding the answers to these questions
+primarily to see if the standards that we hold students to actually measure what
+their achievement might be later in life. It would be interesting to have this
+information to allow students to know what traits to look for in a university
+that may be the most likely to lead them to a more finincially fulfilling life.
+It would also be useful to see if selective universities give their students who
+worked hard to get accepted a return on their investment of time and hard work
+later in life.
+
+
+Part 2: The Data and Problem Solving Process
+
+The data that I am using to try to form an answer to these questions comes from
+the US government created website called the college scorecard. This data is
+readily available from the US government's data website. The College Scorecard
+contains an enormous amount of data, but here are some of the pertinent
+variables that the data set contains: 
+
+-25th and 75th percentiles of scores of students admitted for both SAT and ACT, 
+-Average SAT equivalent scores
+-Four year and six year graduation rates
+-Earnings data from students both six years and ten years after entering school
+
+Using these variables and possibly a few more I think it might be possible to
+figure out what common traits universities with high graduation rates and
+students with high salaries after school have in common. I think it may be
+viable to create some sort of linear model that can predict future salary
+prospects of students based on the entry criteria of various universities. 
+  
+Part 3: Deliverables
+
+My deliverables for this project will be a report detailing the findings of my
+analysis and a slide deck detailing the highlights of my  results, with proper
+data visualizations, and advice for students on what they might want to do to
+maximize their finincial and academic success after high school. 
+
