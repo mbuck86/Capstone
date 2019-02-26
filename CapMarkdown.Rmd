@@ -1,0 +1,184 @@
+```{r echo=FALSE}
+# Importing packages for functionality throughout the document
+library(tidyverse)
+library(ggplot2)
+library(QuantPsyc)
+library(ISLR)
+library(boot)
+```
+
+Introduction:
+What is the value of education after high school? Is going to university actually worth the great cost or debt that going to university
+can incur? Is getting into a more selective school which takes only students with great test scores and perfect GPAs worth the stress
+of studying to obtain those results? These are questions that many high school educators must consider when their students come to them
+asking for advice regarding their future. With the current trend in education being to push students towards university regardless of
+their individual needs or desires, these are questions that require answers. The answers to these questions when responding to them in
+the real world are complex and the answer one gives can vary student by student, but what if these are questions we can answer
+mathematically? What if it is possible to analyze data regarding university entry statistics and statistics from students who have left
+university to see what metrics predict student success later in life? Generating a product that can tell a high school student who is
+interested in pursuing a bachelor’s degree exactly what traits to look for in a school that is going to lead them to success, or tell
+them what test scores they need to achieve to maximize their chances of success in the future could be invaluable in assisting the
+countless students who finish high school every year not knowing where their future is going to take them.
+
+```{r echo=FALSE}
+#Importing Data
+FF <- read.csv("CollegeScorecard_Raw_Data/MERGED2014_15_PP.csv", stringsAsFactors = FALSE)
+Uni <- subset(FF, PREDDEG == 3)
+
+# Selecting some columns to remove to try to make the data frame more
+# manageable and less noisy.
+removeCols1<- c(1:3, 5, 7:12) 
+Uni <- Uni[-removeCols1]
+
+removeCols2<- c(4, 10:23)
+Uni <- Uni[-removeCols2]
+
+# Removing specific program related variables
+Uni <- Uni %>% dplyr::select(-starts_with("PCIP"), -starts_with("CIP"))
+
+# Removing more Misc variables, mostly demographics enrollment stats
+Uni <- Uni %>% dplyr::select(-DISTANCEONLY, -starts_with("UGDS_"),
+                      -starts_with("UG_"), -starts_with('PPTUG_'),-CURROPER)
+
+# Removing demographics based cost information
+Uni <- Uni %>% dplyr::select(-starts_with('NPT41'), -starts_with('NPT42'), -starts_with('NPT43'), -starts_with('NPT44'),
+                      -starts_with('NPT45'), -starts_with('NPT4_0'), -starts_with('NPT4_3'),-starts_with('NPT4_7'))
+
+# Removing more demographics based enrollment information, and more misc
+Uni <- Uni %>% dplyr::select(-starts_with("NUM4"), -starts_with("TUITIONFEE"), -TUITFTE, -INEXPFTE, -PFTFAC, -PCTPELL,
+                      -starts_with("D150_"), -starts_with("C150_4_"), -PFTFTUG1_EF, - starts_with("C150_L4_"))
+
+# More misc variables
+Uni <- Uni %>% dplyr::select(-starts_with("C200_"), -starts_with("D200_"), - starts_with("RET_"), -POOLYRS200, -PCTFLOAN, -UG25ABV, 
+                              -CDR2, -CDR3, -starts_with("DEATH_"), -starts_with("COMP_"), -starts_with("WDRAW_"), -starts_with("ENRL_"),
+                              -starts_with("UNKN_"), -starts_with("LO_INC_"), -starts_with("MD_INC_"), -starts_with("HI_INC_"),
+                      -starts_with("DEP_"),
+                              -starts_with("IND_"), -starts_with("FEMALE_"), -starts_with("MALE_"), -starts_with("PELL_"), -starts_with("NOPELL_"))
+
+#More misc variables: financial
+Uni <- Uni %>% dplyr::select(-starts_with("LOAN_"), -starts_with("NOLOAN_"), -starts_with("FIRSTGEN_"), -starts_with("NOT1STGEN_"))
+
+#removing repayment variables:
+Uni <- Uni %>% dplyr::select(-starts_with("RPY_"), -starts_with("COMPL_"), -starts_with("NONCOM_"), -starts_with("NOTFIRSTGEN_"))
+
+#removing more financial variables
+Uni <- Uni %>% dplyr::select(-"INC_PCT_LO", -'PAR_ED_PCT_1STGEN', -'INC_PCT_M1', -'INC_PCT_M2', -'INC_PCT_H1', -'INC_PCT_H1', -'INC_PCT_H2',
+                              -starts_with("APPL_SCH_PCT"), -starts_with("PAR_ED_PCT"), -starts_with("OVERALL_"))
+
+#removing more misc
+Uni <- Uni %>% dplyr::select(-starts_with("OMA"), -starts_with("OME"))
+
+#more: Values I kept tha tmight be interesting, but have no useful info/all NA
+Uni <- Uni %>% dplyr::select(-"POOLYRS", -"MENONLY", -"WOMENONLY", -"RELAFFIL")
+
+#getting rid of numbers of students in debt categories.
+Uni <- Uni %>% dplyr::select(-DEBT_N, -GRAD_DEBT_N, -CUML_DEBT_N,-CUML_DEBT_P90,-CUML_DEBT_P75,-CUML_DEBT_P25,-CUML_DEBT_P10,
+                              -INC_N, -PAR_ED_N, -APPL_SCH_N)
+
+#getting rid of numbers of students and fafsa data
+Uni <- Uni %>% dplyr::select(-starts_with("COUNT_WNE_"), -starts_with("FSEND_"))
+```
+
+The Data:
+The data being used in this analysis is data maintained by the US government and used the the creation of the website College Scorecard.
+Thedata contains information regarding almost every active post-secondary school  in the United States, including trade-schools, community
+colleges, universities, and graduate schools. This analysis is going to focus on schools that primarily award bachelor’s degrees because
+that is the primary direction secondary school students are pushed in after they finish high school. This dataset contains close to two
+thousand variables, which fall into various categories, such as:
+* Test score statistics of students accepted at the  universities including 25th percentile scores, median scores, and 75 percentile scores. There are also section statistics for the SAT and ACT respectively. There is also an average SAT equivalent variable which aggregates and averages scores from each test.
+* Variables which describe the availability and enrollment rates of various fields of study at each of the universities.
+* Various demographic variables that account for things like race, financial status, and first generation college students.
+* Employment rates and median salary statistics of students at various time periods after they have entered school(for example, six years or ten years after).
+* Various variables to describe the school rather than the students such as average faculty salary and admission rate.
+There are a myriad of questions that this dataset can analyse and it was difficult to decide which variables to keep and which to remove
+for this project. There are two large problems with this dataset that make it tricky to work with beyond the large number of variables.
+The first problem is that the data is split into academic years as .csv files, which means looking at data across years requires some
+amount of tedious work in order to make it so that you can look at everything at the same time. The second is that an exceedingly large
+number of observations are incomplete. Many rows are missing critical values, which makes analysis difficult when one is trying to look at
+all numbers for all schools.
+
+Data Wrangling:
+In order to avoid the complications of a time series analysis, it was decided to focus the project on the most recent academic year that a
+reasonable amount of full data was available for. The most recent year that had available student earnings data as well as comprehensive
+test data was the 2014-15 academic school year, so that was the dataset that was used.The focus of this analysis is students trying to
+earn bachelor’s degrees after high school, and this dataset has a categorical variable that identifies schools based on the primary degree
+they award, so this analysis will focus on schools that primarily award bachelor’s degrees based on this identification in the dataset. In
+order to clean this dataset most of the work involved checking the documentation of the dataset and determining whether or not various 
+sets of variables might be useful in a model predicting future success of students. A large majority of the variables had similar prefixes
+and could be removed with a few lines of code. While determining what variables were definitely not going to be used in analysis, the
+number of variables went from 1899 to less than 200. The final cleaning step was to convert the numerical statistics to numeric values,
+and only select complete observations of the statistics the analysis was going to be using. 
+
+```{r echo=FALSE}
+#converting significant mathematical variables to numeric
+Uni$ADM_RATE <- as.numeric(Uni$ADM_RATE)
+Uni$SATVR25 <- as.numeric(Uni$SATVR25)
+Uni$SATVR75 <- as.numeric(Uni$SATVR75)
+Uni$SATVRMID <- as.numeric(Uni$SATVRMID)
+Uni$SATMT25 <- as.numeric(Uni$SATMT25)
+Uni$SATMT75 <- as.numeric(Uni$SATMT75)
+Uni$SATMTMID <- as.numeric(Uni$SATMTMID)
+Uni$SATWR25 <- as.numeric(Uni$SATWR25)
+Uni$SATWR75 <- as.numeric(Uni$SATWR75)
+Uni$SATWRMID <- as.numeric(Uni$SATWRMID)
+Uni$ACTCMMID <- as.numeric(Uni$ACTCMMID)
+Uni$ACTCM25 <- as.numeric(Uni$ACTCM25)
+Uni$ACTCM75 <- as.numeric(Uni$ACTCM75)
+Uni$ACTEN25 <- as.numeric(Uni$ACTEN25)
+Uni$ACTEN75 <- as.numeric(Uni$ACTEN75)
+Uni$ACTENMID <- as.numeric(Uni$ACTENMID)
+Uni$ACTMTMID <- as.numeric(Uni$ACTMTMID)
+Uni$ACTMT75 <- as.numeric(Uni$ACTMT75)
+Uni$ACTMT25 <- as.numeric(Uni$ACTMT25)
+Uni$ACTWR25 <- as.numeric(Uni$ACTWR25)
+Uni$ACTWR75 <- as.numeric(Uni$ACTWR75)
+Uni$ACTWRMID <- as.numeric(Uni$ACTWRMID)
+Uni$UGDS <- as.numeric(Uni$UGDS)
+Uni$COSTT4_A <- as.numeric(Uni$COSTT4_A)
+Uni$AVGFACSAL <- as.numeric(Uni$AVGFACSAL)
+Uni$C150_4 <- as.numeric(Uni$C150_4)
+Uni$MD_EARN_WNE_P10 <- as.numeric(Uni$MD_EARN_WNE_P10)
+Uni$C100_4 <- as.numeric(Uni$C100_4)
+```
+
+Exploratory Data Analysis:
+While formulating ideas for how to go about this analysis, the first question that I found pertinent to ask was about graduation rates at 
+universities. The U.S. government regularly releases data that shows that poeople who have completed higher levels of education generally
+have higher median salaries. Here is a histogram of the four year graduation rates of universities in the dataset:
+```{r}
+ggplot(Uni, aes(x=C100_4)) + geom_histogram(color='black', fill='blue') + 
+  labs(title="Four Year Graduation Rates of Universities in the U.S, 2014-2015")
+
+mean(Uni$C100_4, na.rm=TRUE)
+median(Uni$C100_4, na.rm=TRUE)
+  
+```
+The mean of the four year graduation rates from schools in this dataset was around 34.21% while the median was 31.03%. While seeing these
+statistics I was somewhat shocked. I was surprised to see that only 30% of students typically made it through university in four years,
+as it is typically understood that university takes four years to complete. This data has a strange trait of having several 0% graduation rate universities that probably greatly skew that number. Another statistic in this dataset is the six year graduation 
+rate:
+```{r}
+ggplot(Uni, aes(x=C150_4)) + geom_histogram(color='black', fill='blue') + 
+  labs(title="Six Year Graduation Rates of Universities in the U.S, 2014-2015")
+
+mean(Uni$C150_4, na.rm=TRUE)
+median(Uni$C150_4, na.rm=TRUE)
+```
+The six year graduation rate shows a greatly imrpoved graduation rate over the four year graduation rate, with a mean of around 50.15%
+and a median around 49.74%. This still does not seem like a great aspect of the university education system. Most high school students are
+sold on the fact that university takes four years to complete, but it seems saying it will takes six years is a far more accurate
+reperesentation of reality. While graduation may be a sign of success at university, our dataset contains a variable that is the median
+earning of students from that university ten years after entering school. This variable seems to be a better answer to a question regarding
+student financial success after attending university, so we will now look at some plots of student earnings vs. some other potential
+predictor variables.
+
+```{r}
+ggplot(data=Uni, aes(x=SAT_AVG, y=MD_EARN_WNE_P10)) + geom_point() + xlab("Average SAT Equivalent") + ylab('Median Earnings Ten Years After Entering School')
+```
+
+This graph is a scatterplot of yearly salaries of students at universities ten years after they had entered university versus the average
+SAT equivalent score of students attending those universities. This graph does seem to show some sort of positive relationship, which could
+be a surprise if one does not view standardised tests as proper measures of student ability.
+
+
+
