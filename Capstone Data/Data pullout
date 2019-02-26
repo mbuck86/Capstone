@@ -1,0 +1,49 @@
+library(dplyr)
+library(ggplot2)
+
+FF <- read.csv("CollegeScorecard_Raw_Data/MERGED2014_15_PP.csv", stringsAsFactors = FALSE)
+Uni <- subset(FF, PREDDEG == 3)
+
+#selecting variables for analysis
+
+Uni$ADM_RATE <- as.numeric(Uni$ADM_RATE)
+Uni$SATVR25 <- as.numeric(Uni$SATVR25)
+Uni$SATVR75 <- as.numeric(Uni$SATVR75)
+Uni$SATVRMID <- as.numeric(Uni$SATVRMID)
+Uni$SATMT25 <- as.numeric(Uni$SATMT25)
+Uni$SATMT75 <- as.numeric(Uni$SATMT75)
+Uni$SATMTMID <- as.numeric(Uni$SATMTMID)
+Uni$SATWR25 <- as.numeric(Uni$SATWR25)
+Uni$SATWR75 <- as.numeric(Uni$SATWR75)
+Uni$SATWRMID <- as.numeric(Uni$SATWRMID)
+Uni$ACTCMMID <- as.numeric(Uni$ACTCMMID)
+Uni$ACTCM25 <- as.numeric(Uni$ACTCM25)
+Uni$ACTCM75 <- as.numeric(Uni$ACTCM75)
+Uni$ACTEN25 <- as.numeric(Uni$ACTEN25)
+Uni$ACTEN75 <- as.numeric(Uni$ACTEN75)
+Uni$ACTENMID <- as.numeric(Uni$ACTENMID)
+Uni$ACTMTMID <- as.numeric(Uni$ACTMTMID)
+Uni$ACTMT75 <- as.numeric(Uni$ACTMT75)
+Uni$ACTMT25 <- as.numeric(Uni$ACTMT25)
+Uni$ACTWR25 <- as.numeric(Uni$ACTWR25)
+Uni$ACTWR75 <- as.numeric(Uni$ACTWR75)
+Uni$ACTWRMID <- as.numeric(Uni$ACTWRMID)
+Uni$UGDS <- as.numeric(Uni$UGDS)
+Uni$COSTT4_A <- as.numeric(Uni$COSTT4_A)
+Uni$AVGFACSAL <- as.numeric(Uni$AVGFACSAL)
+Uni$C150_4 <- as.numeric(Uni$C150_4)
+Uni$PAR_ED_PCT_MS <- as.numeric(Uni$PAR_ED_PCT_MS)
+Uni$PAR_ED_PCT_HS <- as.numeric(Uni$PAR_ED_PCT_HS)
+Uni$PAR_ED_PCT_PS <- as.numeric(Uni$PAR_ED_PCT_PS)
+Uni$PAR_ED_PCT_1STGEN <- as.numeric(Uni$PAR_ED_PCT_1STGEN)
+Uni$DEP_INC_AVG <- as.numeric(Uni$DEP_INC_AVG)
+Uni$IND_INC_AVG <- as.numeric(Uni$IND_INC_AVG)
+Uni$MD_EARN_WNE_P10 <- as.numeric(Uni$MD_EARN_WNE_P10)
+
+
+New_Dat <- Uni %>% select(SATVR25, SATVR75, SATVRMID, SATMT25, SATMT75, SATMTMID, SATWR25, SATWR75, SATWRMID,
+                          ACTCM25, ACTCM75, ACTCMMID, ACTEN25, ACTEN75, ACTENMID, ACTMT25, ACTMT75, ACTMTMID, ACTWR25,
+                          ACTWR75, ACTWRMID, UGDS, COSTT4_A, AVGFACSAL, C150_4, PAR_ED_PCT_MS, PAR_ED_PCT_HS, PAR_ED_PCT_PS,
+                          PAR_ED_PCT_1STGEN, DEP_INC_AVG, IND_INC_AVG,ADM_RATE, MD_EARN_WNE_P10)
+
+write.csv(New_Dat, file="RawData.csv", row.names = FALSE)
