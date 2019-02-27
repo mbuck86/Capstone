@@ -139,6 +139,7 @@ Uni$AVGFACSAL <- as.numeric(Uni$AVGFACSAL)
 Uni$C150_4 <- as.numeric(Uni$C150_4)
 Uni$MD_EARN_WNE_P10 <- as.numeric(Uni$MD_EARN_WNE_P10)
 Uni$C100_4 <- as.numeric(Uni$C100_4)
+Uni$SAT_AVG <- as.numeric(Uni$SAT_AVG)
 ```
 
 Exploratory Data Analysis:
@@ -146,7 +147,7 @@ While formulating ideas for how to go about this analysis, the first question th
 universities. The U.S. government regularly releases data that shows that poeople who have completed higher levels of education generally
 have higher median salaries. Here is a histogram of the four year graduation rates of universities in the dataset:
 ```{r}
-ggplot(Uni, aes(x=C100_4)) + geom_histogram(color='black', fill='blue') + 
+ggplot(Uni, aes(x=C100_4)) + geom_histogram(color='black', fill='blue', bins=50) + 
   labs(title="Four Year Graduation Rates of Universities in the U.S, 2014-2015")
 
 mean(Uni$C100_4, na.rm=TRUE)
@@ -158,7 +159,7 @@ statistics I was somewhat shocked. I was surprised to see that only 30% of stude
 as it is typically understood that university takes four years to complete. This data has a strange trait of having several 0% graduation rate universities that probably greatly skew that number. Another statistic in this dataset is the six year graduation 
 rate:
 ```{r}
-ggplot(Uni, aes(x=C150_4)) + geom_histogram(color='black', fill='blue') + 
+ggplot(Uni, aes(x=C150_4)) + geom_histogram(color='black', fill='blue', bins=50) + 
   labs(title="Six Year Graduation Rates of Universities in the U.S, 2014-2015")
 
 mean(Uni$C150_4, na.rm=TRUE)
@@ -178,7 +179,36 @@ ggplot(data=Uni, aes(x=SAT_AVG, y=MD_EARN_WNE_P10)) + geom_point() + xlab("Avera
 
 This graph is a scatterplot of yearly salaries of students at universities ten years after they had entered university versus the average
 SAT equivalent score of students attending those universities. This graph does seem to show some sort of positive relationship, which could
-be a surprise if one does not view standardised tests as proper measures of student ability.
+be a surprise if one does not view standardised tests as proper measures of student ability. One thought that may be interesting to consider
+is whether or not different standardized tests are better predictors of future financial success.
+The following is a graph of the same salary statistic as the previous graph versus cumulative ACT scores. In North Carolina, the ACT is a
+test given to every junior in public school for free. Student’s test scores on the ACT are partially included in school report card grades.
+This graph also shows a positive relationship between test scores and salaries, to the point that the graphs seem practically identical to
+each other. This leads me to believe that it is possible these statistics as well as other test related statistics could be used to predict
+future student success.
+```{r}
+ggplot(data=Uni, aes(x=ACTCMMID, y=MD_EARN_WNE_P10)) + geom_jitter() + xlab("Median Cumulative ACT Score") + ylab('Median Earnings Ten Years After Entering School')
+```
+It may also be interesting to observe if some other characteristics of these universities also affect success of students in the future. The
+other characteristics that will be considered here are: six-year graduation rate, admission rate, and faculty salary. It may appear to be
+obvious that graduation rate would affect future salaries of students but it might be useful to check the intuition with this dataset.
+```{r}
+ggplot(data=Uni, aes(x=C150_4, y=MD_EARN_WNE_P10)) + geom_jitter() + xlab("Six-year Graduation Rate") + ylab('Median Earnings Ten Years After Entering School')
+```
+This scatter plot is interesting to look at. Having the knowledge that more educated people generally have highe wages, the somewhat
+flat curve of this graph seems a bit anomolous. There doesn't seem to be a clear positive relationship until around the 50% graduation
+rate mark. This could be attributed to the fact that schools with lower completion rates tend to have lower median salaries since many of 
+their past students did not obtain their degrees they were seeking, and therefore their former students recieve lower pay on average because
+of the lower completed education level. One additional statistic I was interested in looking to explore when trying to build the model was
+average faculty salary. As an educator myself I thought it may be interesting to see if the amount shcool faculty were paid was related to
+student success. 
+```{r}
+ggplot(data=Uni, aes(x=AVGFACSAL, y=MD_EARN_WNE_P10)) + geom_jitter() + xlab("Average Faculty Salary") + ylab('Median Earnings Ten Years After Entering School')
+```
+The positive correlation between average faculty salary and student earnings shown in this graph was a bit surprising to me. I originally
+believed if there was any correlation between the two it would only be slightly correlated, however this graph seems to show a high positive
+correlation between faculty salary and student financial success in the future.
 
-
-
+Machine Learning:
+After performing exploratory analysis I felt comfortable with attempting to build a multiple linear regression model to predict student 
+salaries ten years after entering school.
