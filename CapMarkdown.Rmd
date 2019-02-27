@@ -211,4 +211,54 @@ correlation between faculty salary and student financial success in the future.
 
 Machine Learning:
 After performing exploratory analysis I felt comfortable with attempting to build a multiple linear regression model to predict student 
-salaries ten years after entering school.
+salaries ten years after entering school. Most of the predictors that were chosen seemed to have a close to linear relationship  Through 
+the exploratoty data analysis and based off of the questions asked previously in the report, these were the predictors chosen to construct
+the initial model of the linear regression:
+*Average SAT Equivalent
+*Six year graduation rate
+*25 percentile, 75th percentile, and median SAT verbal and math sores.
+*ACT cumulative, math, and english median scores
+*University admission rates
+*Average Faculty Salary 
+```{r}
+#Selecting complete cases based on variables in the model
+Uni <- Uni %>% dplyr::select("SAT_AVG", "C150_4", "C100_4", "SATVR25", "SATVR75", "SATMT25", "SATMT75",
+                      "SATWR25", "SATWR75","SATVRMID", "SATMTMID", "ACTCMMID", "ACTENMID", "ACTMTMID",
+                      "ADM_RATE", "ADM_RATE_ALL", "AVGFACSAL", "MD_EARN_WNE_P10", "MD_EARN_WNE_P6")
+
+Uni <- na.omit(Uni)
+
+# Creating Linear Models 
+Earn <- lm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT25+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.1 <- lm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.2 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.3 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.4 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATMT75+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.5 <- lm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.6 <- lm(formula = MD_EARN_WNE_P10 ~ C150_4 + SATVR25 + SATVRMID + SATMTMID + ACTENMID + ACTMTMID + AVGFACSAL, data = Uni)
+Earn.7 <- lm(formula = MD_EARN_WNE_P10 ~ C150_4 + SATVRMID + SATMTMID + ACTENMID + ACTMTMID + AVGFACSAL, data = Uni)
+
+# Re-creating linear models using glm() in order to perform LOOCV
+Earn <- glm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT25+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.1 <- glm(MD_EARN_WNE_P10~SAT_AVG+C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.2 <- glm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTCMMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.3 <- glm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVR75+SATMT75+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.4 <- glm(MD_EARN_WNE_P10~C150_4+SATVR25+SATMT75+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.5 <- glm(MD_EARN_WNE_P10~C150_4+SATVR25+SATVRMID+SATMTMID+ACTENMID+ACTMTMID+ADM_RATE+AVGFACSAL, data = Uni)
+Earn.6 <- glm(formula = MD_EARN_WNE_P10 ~ C150_4 + SATVR25 + SATVRMID + SATMTMID + ACTENMID + ACTMTMID + AVGFACSAL, data = Uni)
+Earn.7 <- glm(formula = MD_EARN_WNE_P10 ~ C150_4 + SATVRMID + SATMTMID + ACTENMID + ACTMTMID + AVGFACSAL, data = Uni)
+
+#performing LOOCV
+set.seed(1)
+Earn.LOOCV <- cv.glm(Uni, Earn)
+Earn.1.LOOCV <- cv.glm(Uni, Earn.1)
+Earn.2.LOOCV <- cv.glm(Uni, Earn.2)
+Earn.3.LOOCV <- cv.glm(Uni, Earn.3)
+Earn.4.LOOCV <- cv.glm(Uni, Earn.4)
+Earn.5.LOOCV <- cv.glm(Uni, Earn.5)
+Earn.6.LOOCV <- cv.glm(Uni, Earn.6)
+Earn.7.LOOCV <- cv.glm(Uni, Earn.7)
+```
+After selecting complete cases of all of these variables from the dataset, there were 588 observations remaining. Multiple-Linear regression was performed
+using the variables described above with these observations. Various variables were removed from the model in order to try to improve the accuracy of the model
+based on their significance values as long as they did not significantly decrease the r-Squared value of the model. 
