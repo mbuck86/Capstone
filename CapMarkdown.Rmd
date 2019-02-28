@@ -5,6 +5,9 @@ library(ggplot2)
 library(QuantPsyc)
 library(ISLR)
 library(boot)
+library(jtools)
+library(ggrepel)
+library(factoextra)
 ```
 
 Introduction:
@@ -222,9 +225,9 @@ the initial model of the linear regression:
 *Average Faculty Salary 
 ```{r}
 #Selecting complete cases based on variables in the model
-Uni <- Uni %>% dplyr::select("SAT_AVG", "C150_4", "C100_4", "SATVR25", "SATVR75", "SATMT25", "SATMT75",
-                      "SATWR25", "SATWR75","SATVRMID", "SATMTMID", "ACTCMMID", "ACTENMID", "ACTMTMID",
-                      "ADM_RATE", "ADM_RATE_ALL", "AVGFACSAL", "MD_EARN_WNE_P10", "MD_EARN_WNE_P6")
+Uni <- Uni %>% dplyr::select(SAT_AVG, C150_4, C100_4, SATVR25, SATVR75, SATMT25, SATMT75,
+                      SATWR25, SATWR75,SATVRMID, SATMTMID, ACTCMMID, ACTENMID, ACTMTMID,
+                      ADM_RATE, ADM_RATE_ALL, AVGFACSAL, MD_EARN_WNE_P10, MD_EARN_WNE_P6)
 
 Uni <- na.omit(Uni)
 
@@ -258,7 +261,149 @@ Earn.4.LOOCV <- cv.glm(Uni, Earn.4)
 Earn.5.LOOCV <- cv.glm(Uni, Earn.5)
 Earn.6.LOOCV <- cv.glm(Uni, Earn.6)
 Earn.7.LOOCV <- cv.glm(Uni, Earn.7)
+
+lm.beta(Earn.6)
+summ(Earn.6)
 ```
 After selecting complete cases of all of these variables from the dataset, there were 588 observations remaining. Multiple-Linear regression was performed
 using the variables described above with these observations. Various variables were removed from the model in order to try to improve the accuracy of the model
-based on their significance values as long as they did not significantly decrease the r-Squared value of the model. 
+based on their significance values as long as their absence did not significantly decrease the r-Squared value of the model. Leave-one-out cross validation was
+also used to compare the models to each other. The best model that was created from this method was predicting the median salary of students ten years
+after they entered university based on the following independant variables: six year graduation rate(B=0.1867, p<.01), 25th percentile SAT verbal
+score(B=0.1757, p=0.16), median SAT verbal score(B=-0.4093, p<0.1), median SAT math score(B=0.2424, p=0.02), median ACT english score(B=-.5058, p<.01), median
+ACT math score(B=0.811, p<.01) and the average faculty salary of the universities(B=0.3330, p<.01), with F(7, 580)=176.4, p < 0.1, R^2=0.6804. As can be
+observerd from the table above the SAT 25th percentile statistic was not significant(p=0.16), however removing it from the model results in a lower r-squared
+value and a worse LOOCV result.. The following plot will be visualing the coefficients of the described regression model:
+```{r}
+plot_summs(Earn.6, scale=TRUE)
+```
+Observing this plot it can be seen that this model meets some intution we may have observed from the exploratoty analysis. Both six year graduation rate and
+median ACT math score have large positive coefficients. What does not follow intuition from this model is that both of the reading/english based test score
+variables have negative coefficients, but if we observe plots of these statistics against our dependant variable:
+```{r}
+ggplot(data=Uni, aes(x=SATVRMID, y=MD_EARN_WNE_P10)) + geom_jitter() + xlab("Median SAT Verbal Score") + ylab('Median Earnings Ten Years After Entering School')
+```
+```{r}
+ggplot(data=Uni, aes(x=ACTENMID, y=MD_EARN_WNE_P10)) + geom_jitter() + xlab("Median ACT English Score") + ylab('Median Earnings Ten Years After Entering School')
+```
+They both seem to have a positive relationship with our dependant variable. This anomaly within the model seems to be a result of strong muticolinearity 
+between the chosen dependant variables. This anomaly causes this model to be somewhat lacking in interpretability unless we want to assume that prowess in
+math causes one to be financially successful while prowess in verbal communcation causes one to be lesss successful. In order to try to reduce the anomolous
+affect of the multicolinearity, a dimensionality reduction was performed on all of the test statistic variables from the dataset.
+
+(insert dimensionality reduction explanation here)
+```{r}
+#Pulling out data for the dimensionality reduction, all of these variables were pulled out to be used later:
+New_Dat <- Uni %>% select(SATVR25, SATVR75, SATVRMID, SATMT25, SATMT75, SATMTMID, SATWR25, SATWR75, SATWRMID,
+                          ACTCM25, ACTCM75, ACTCMMID, ACTEN25, ACTEN75, ACTENMID, ACTMT25, ACTMT75, ACTMTMID, ACTWR25,
+                          ACTWR75, ACTWRMID, UGDS, COSTT4_A, AVGFACSAL, C150_4, PAR_ED_PCT_MS, PAR_ED_PCT_HS, PAR_ED_PCT_PS,
+                          PAR_ED_PCT_1STGEN, DEP_INC_AVG, IND_INC_AVG,ADM_RATE, MD_EARN_WNE_P10)
+
+write.csv(New_Dat, file="RawData.csv", row.names = FALSE)
+
+#Perform the dimensionality reduction:
+
+### --- data
+dataSet <- read.csv('RawData.csv', 
+                    header = T,
+                    check.names = F,
+                    stringsAsFactors = F)
+# - keep complete observations only
+dataSet <- dataSet[complete.cases(dataSet), ]
+
+# - select test scores for
+# - dimensionality reduction
+dataSetPCA <- dataSet %>% select(
+  starts_with('SAT'),
+  starts_with('ACT')
+)
+
+### --- PCA
+pcaSolution <- prcomp(dataSetPCA, scale = T, center = T)
+
+### --- Scree Plot
+# - prepare plot data.frame
+pcaSolutionSummary <- as.data.frame(summary(pcaSolution)$importance)
+pcaSolutionSummary <- as.data.frame(t(pcaSolutionSummary))
+pcaSolutionSummary$`Proportion of Variance`
+pcaSolutionSummary$Component = rownames(pcaSolutionSummary)
+pcaSolutionSummary$Component <- factor(pcaSolutionSummary$Component, 
+                                       levels = pcaSolutionSummary$Component, 
+                                       ordered = T)
+# - scree plot w. {ggplot2}
+ggplot(pcaSolutionSummary, 
+       aes(x = Component,
+           y = `Proportion of Variance`, 
+           label = round(pcaSolutionSummary$`Proportion of Variance`, 3))) + 
+  geom_line(group = 1, color = "black", size = .25) + 
+  geom_point(size = .75) + 
+  theme_bw() + 
+  geom_text_repel(size = 2) + 
+  theme(axis.text.x = element_text(angle = 90))
+
+### --- Extract the first principal component to 
+### --- represent all test scores
+components <- get_pca_ind(pcaSolution)
+testScore <- components$coord[, 1]
+
+### --- Create new data frame:
+### --- encompass only non-test variables
+### --- and use testScore to represent all
+### --- test variables
+dataSet2 <- dataSet %>% 
+  select(
+    -starts_with('SAT'),
+    -starts_with('ACT')
+  )
+dataSet2$testScore <- testScore
+
+### --- save the new data set:
+write.csv(dataSet2, "dataSet_Reduced.csv")
+
+```
+
+After performing the dimensionality reduction new variables were pulled from the dataset as new independant variables for a new linear regression model, 
+those new variables were:
+*Number of undergraduate students enrolled
+*Average cost of attendance
+*Percent of students whose parents finished high school
+*Percent of students whose parents had some postsecondary education
+*Average family income of dependant students(as in students who are dependant on their parents)
+*Average family income of dependant students(students who support themselves)
+A new linear regression model was built off of these variables.
+```{r}
+# Importing dimensionality reduction data
+reduced <- read.csv('dataSet_Reduced.csv')
+reduced <- reduced %>% dplyr::select(-X, -PAR_ED_PCT_1STGEN, -PAR_ED_PCT_MS)
+
+new_Mod <- lm(MD_EARN_WNE_P10 ~ ., data=reduced)
+summ(new_Mod)
+```
+Above: A Summary of the model, Below: the standardized coefficiants of the model
+```{r}
+lm.beta(new_Mod)
+```
+After generating this new model, we see several interesting results which are quite puzzling from an interpretation standpoint. After all of the exploratory
+analysis we performed, the new test score variable(p=0.21) was not a significant predictor in the model, while the variables that involved student
+socio-economic status, such as family income and parent education were significant. Interestingly as well, the average faculty salary statistic was still
+significant in this model. Visualizing the coefficients from this new model:
+```{r}
+plot_summs(new_Mod, scale=TRUE)
+```
+We observe the model somewhat contradicting itself. The model predicts a negative coefficient for both of the variables that describe parent past 
+education(high school and post-secondary education). The model also predicts positive coeffients for both average income values, which is contraditory since
+a higher education level generally leads to a higher incomes for families. These results are particularly disapointing as it seems that predicting future
+student success with these specific statistics is not something that is necesarilly possible using the methods used in this project. 
+
+Conclusion/Future Actions:
+After observing these results from each of these models it seems that this particular dataset is not necessarily useful in determining quantitatively how
+university statistics necesarily predict the success of their students later. I do believe there are future actions and studies that can be performed where
+we can use these statistics to predict success. I believe that since we were able to observe many positive relationthips between test statistics and future 
+earnings, if one could obtain access to these statistics that were used in these models and statistics from past students at the university, it may be more
+possible to try to make quantitative generalizations about the financial successes of students using consistent information from a single university. It also
+may be more interesting or meaningful to focus more on looking at financial statistics of students entering school and after they have left school to help
+analyze financial decisions of students or give prospective students advice as to what path may be most financially viable to them. In general, it seemed that
+tg=he best ways to maximize chances to be financially succesful was to attend a university that had a higher graduation rate. Without further investigation it
+is not particularly possible to make more quantitave statements from this data without using different methods of prediction. It seems trying to attempt to
+make these predictions using multiple-linear regression is very difficult, and generating an interpretable model with these independant variables is not 
+necesarily effective or useful.
